@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+</head>
+
+<body>
+    <h1>Drag and Drop CSV Importer</h1>
+    <div id="drop-zone" class="drop-zone" ondrop="handleDrop(event)" ondragover="handleDragOver(event)">
+        <p>Drag and drop a CSV file here.</p>
+        <input type="file" id="csvFile" accept=".csv" style="display: none;" onchange="handleFileSelect()">
+        <label for="csvFile" class="file-label">Or click to browse</label>
+        <label for="columnSelect">Select Columns:</label>
+        <select id="columnSelect" multiple="multiple"></select>
+        <button onclick="importCSV()">Import</button>
+    </div>
+    <style>
+        .drop-zone {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .drag-over {
+            background-color: #f0f0f0;
+        }
+
+        .file-label {
+            background-color: #4caf50;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+            margin: 10px auto;
+        }
+    </style>
+    <script>
+        var dropZone = document.getElementById('drop-zone');
+        var columnSelect = document.getElementById('columnSelect');
+        var selectedColumns = [];
+
+        function handleFileSelect() {
+            var fileInput = document.getElementById('csvFile');
+            var file = fileInput.files[0];
+            handleFile(file);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            var file = e.dataTransfer.files[0];
+            document.getElementById('csvFile').files = e.dataTransfer.files;
+            handleFile(file);
+        }
+
+        function handleFile(file) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var data = e.target.result;
+                populateColumnSelect(data);
+            };
+            reader.readAsText(file);
+        }
+
+        function populateColumnSelect(data) {
+            var csvData = data.split('\n')[0].split(',');
+            columnSelect.innerHTML = '';
+
+            csvData.forEach(function (column, index) {
+                var option = document.createElement('option');
+                option.value = index;
+                option.text = column;
+                columnSelect.appendChild(option);
+            });
+        }
+
+        function importCSV() {
+            var fileInput = document.getElementById('csvFile');
+            var file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a file.');
+                return;
+            }
+
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var data = e.target.result;
+                selectedColumns = Array.from(columnSelect.selectedOptions, option => parseInt(option.value));
+                google.script.run.importCSV(data, selectedColumns);
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+
+</html>
